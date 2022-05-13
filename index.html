@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css"
+        integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <!-- FONT AWESOME -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        .menu {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 7px;
+            list-style-type: none;
+            min-height: 110px;
+        }
+
+        .icon__delete {
+            cursor: pointer;
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <form class="form was-validated mt-3" id="form">
+            <div class="form-group">
+                <label for="name">Nhập tên student</label>
+                <div class="row">
+                    <div class="col-10">
+                        <input id="name" class="form-control" type="text" name="name" required />
+                        <div class="invalid-feedback">
+                            Please choose a name.
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <button class="btn btn-primary w-100" type="submit">Thêm tên</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+        <table class="table table-bordered table-hover mb-3">
+            <thead>
+                <tr>
+                    <th>Họ tên</th>
+                    <th>Nhóm</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="list-student">
+            </tbody>
+        </table>
+        <button class="btn btn-success w-100" id="btn-random">Nhấn để tìm nhóm <span id="number-group">1</span></button>
+        <div class="row border pb-4 pt-4 mt-3" id="list-groups">
+
+        </div>
+    </div>
+    <script>
+        const buttonSubmit = document.querySelector("#form");
+        const buttonRandom = document.querySelector("#btn-random")
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            const res = localStorage.getItem("groups");
+            const data = res ? JSON.parse(res) : [];
+            const inputName = document.querySelector("#name");
+            data.push({
+                name: inputName.value,
+                group: null
+            })
+            localStorage.setItem("groups", JSON.stringify(data))
+            renderListStudent();
+            inputName.value = "";
+        };
+        buttonSubmit.addEventListener("submit", handleSubmit)
+        const renderListStudent = () => {
+            const res = localStorage.getItem("groups");
+            const data = res ? JSON.parse(res) : [];
+            const eleListStudent = document.querySelector("#list-student");
+            const groupColor = [];
+            if (data.length > 0) {
+                eleListStudent.innerHTML = data.map((item, index) => {
+                    var randomColor = Math.round, r = Math.random, s = 255;
+                    randomColor = 'rgba(' + randomColor(r() * s) + ',' + randomColor(r() * s) + ',' + randomColor(r() * s) + ',' + 0.3 + ')';
+                    const findColor = groupColor.find(color => color.group === item.group);
+                    if (findColor) {
+                        randomColor = findColor.color;
+                    }
+                    groupColor.push({
+                        group: item.group,
+                        color: randomColor
+                    })
+                    return `<tr style="background-color: ${randomColor}">
+                        <td>${item.name}</td>
+                        <td>${item.group}</td>
+                        <td><i class="fa-solid fa-trash-can text-danger icon__delete" onclick="deleteStudent(${index})"></i></td>
+                    </tr>`
+                }).join("")
+            } else {
+                eleListStudent.innerHTML = `<tr class="text-center">
+                        <td colSpan="3">Không có student nào!</td>
+                    </tr>`
+            }
+        };
+        const renderListGroup = () => {
+            const res = localStorage.getItem("groups");
+            const data = res ? JSON.parse(res) : [];
+            const eleListGroups = document.querySelector("#list-groups");
+            const dataHasGroup = data.filter(item => item.group);
+            const mapGroupIsJoin = data.filter(item => item.group).map(item => item.group);
+            const groupMax = mapGroupIsJoin.length > 0 && Math.max(...mapGroupIsJoin);
+            document.querySelector("#number-group").innerHTML = groupMax + 1;
+            if (groupMax) {
+                let content = "";
+                for (let groupNumber = 1; groupNumber <= groupMax; groupNumber++) {
+                    content += `<div class="col-4">
+                        <h4>Nhóm ${groupNumber}</h4>
+                        <ul class="menu">`
+                    content += dataHasGroup.filter(item => item.group === groupNumber).map((item, index) => {
+                        return `
+                            <li>${item.name}</li>
+                        `
+                    }).join("")
+                    content += `</ul>
+                    </div>`
+                }
+                eleListGroups.innerHTML = content
+            }
+        };
+        const deleteStudent = (index) => {
+            const res = localStorage.getItem("groups");
+            const data = res ? JSON.parse(res) : [];
+            if (data.length > 0) {
+                const confirmDelete = confirm("Bạn có chắc chắn muốn xoá ?");
+                if (confirmDelete) {
+                    data.splice(index, 1);
+                    localStorage.setItem("groups", JSON.stringify(data))
+                    alert("Xoá thành công")
+                }
+            } else {
+                alert("Xoá thất bại")
+            }
+            renderListStudent();
+        }
+        const randomGroup = (count) => {
+            const res = localStorage.getItem("groups");
+            const data = res ? JSON.parse(res) : [];
+            const eleGroups = document.querySelector("#list-group");
+            const mapGroupIsJoin = data.filter(item => item.group).map(item => item.group);
+            const groupMax = mapGroupIsJoin.length > 0 ? Math.max(...mapGroupIsJoin) + 1 : 1;
+            const dataHasGroup = data.filter(item => item.group);
+            if (dataHasGroup.length === data.length) return alert("Student đã có group hết rồi!")
+            for (let i = 0; i < count; i++) {
+                if (!data.find(item => !item.group)) break;
+                let randomIndex = Math.floor(Math.random() * data.length);
+                while (data[randomIndex].group) {
+                    randomIndex = Math.floor(Math.random() * data.length);
+                }
+                data[randomIndex].group = groupMax;
+            }
+            localStorage.setItem("groups", JSON.stringify(data))
+            renderListStudent();
+            renderListGroup();
+        }
+        buttonRandom.addEventListener("click", () => randomGroup(3))
+        renderListStudent();
+        renderListGroup();
+    </script>
+</body>
+
+</html>
